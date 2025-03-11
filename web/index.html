@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+    <script type="module" src="https://unpkg.com/esp-web-tools@8.0.1/dist/web/install-button.js?module"></script>
+    <title>myclock settings</title>
+    <style>
+      header {
+        margin-top: 20px;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(to bottom, #0d144a, #f1f1f1);
+        color: white;
+      }
+      .canvas {
+        text-align:center;
+        display: grid;
+        grid-template-columns: repeat(64, 10px);
+        grid-template-rows: repeat(64, 10px);
+      }
+      .grid-cell {
+        width: 10px;
+        height: 10px;
+        border: 1px solid black;
+        background-color: white;
+      }
+      .grid-cell:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+      .controls {
+        margin-left: 10px;
+      }
+      .footer {
+        background-color: #f1f1f1;
+        text-align: center;
+        padding: 10px 0;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+      }
+      .footer p {
+        margin: 0;
+        color: #333;
+      }
+      .modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgb(0,0,0); 
+        background-color: rgba(0,0,0,0.4); 
+        padding-top: 60px;
+      }
+      .modal-content {
+        background: linear-gradient(to bottom, #0d144a, #f1f1f1);
+        margin: 5% auto; 
+        padding: 20px;
+        border: 1px solid #888;
+        width: 30%; 
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .button-container button {
+        margin-left: 10px;
+      }
+    </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul class="menu">
+        <li><a href="https://b23.tv/uysJOjk" target="_blank">Contact with me</a></li>
+      </ul>
+    </nav>
+  </header>
+  <!-- The Modal -->
+  <div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>WiFi Settings</h2>
+      <form id="wifiForm">
+          <label for="ssid">SSID:</label><br>
+          <input type="text" id="ssid" name="ssid" class="nes-input is-success"><br><br>
+          <label for="password">Password:</label><br>
+          <input type="password" id="password" name="password" class="nes-input is-success"><br><br>
+          <div class="button-container">
+              <button type="button" id="cancelBtn" class="nes-btn is-warning">Cancel</button>
+              <button type="submit" class="nes-btn is-success">Save</button>
+          </div>
+      </form>
+    </div>
+  </div>
+  <div style="flex: 1;">
+    <div style="margin-top: 10px;text-align: center;">
+      <section class="message-list">
+        <section class="message -left">
+          <i class="nes-icon github is-large"></i>
+          <div class="nes-balloon from-left">
+            <p style="color: #0d144a;">My clock settings</p>
+          </div>
+        </section>
+      </section>
+    </div>
+    <div class="nes-container is-rounded">
+      <div style="display: flex">
+        <div>
+          <div class="canvas"></div>
+          <div style="text-align: center; margin-top: 10px">
+            <button id="commitButton" class="nes-btn is-warning">Draw</button>
+            <button id="rotateButton" class="nes-btn is-warning">Rotate</button>
+            <button id="clearGridButton" class="nes-btn is-warning">Clear</button>
+          </div>
+        </div>
+        <div class="controls">
+          <esp-web-install-button manifest="./manifest.json">
+            <button slot="activate" class="nes-btn is-warning">Install firmware</button>
+            <span slot="unsupported">Ah snap, your browser doesn't work!</span>
+            <span slot="not-allowed">Ah snap, you are not allowed to use this on HTTP!</span>
+          </esp-web-install-button>
+          <button id="connect"  class="nes-btn is-primary">Connect to serial port</button>
+          <button id="wifiSettingsButton" class="nes-btn is-primary">Wifi settings</button><hr/>
+          <input type="color" id="colorPicker" name="colorPicker" value="#239b56">
+          <p>Selected Color: <span id="selectedColor">#239b56</span>
+          <label style="margin-left: 20px">
+            <input type="checkbox" class="nes-checkbox" id="backgroundColorCheckbox" />
+            <span>background</span>
+          </label>
+          <button id="setFontColorButton" class="nes-btn is-success">Set font color</button>
+          </p>
+          <div>
+            <label style="margin-left: 20px">
+              <input type="checkbox" class="nes-checkbox" checked id="swapBleGreenCheckbox" />
+              <span>Swap blue and green</span>
+            </label>
+            <button id="swapBlueGreenButton" class="nes-btn is-success">swap</button>
+          </div>
+          <hr/>
+          <div style="display: flex">
+            <div>
+              <span>X-offset：</span><input id="xOffsetInput" value="32" placeholder="偏移行"></input><br/><br/>
+              <span>Y-offset：</span><input id="yOffsetInput" value="32" placeholder="偏移列"></input><br/><br/>
+              <span>XY-Scale：</span><input id="scaleInput"   value="1" placeholder="放大倍数(只能是整数倍)"></input>
+            </div>
+            <div style="margin-left: 20px">
+              <textarea id="posInput" rows="6" cols="40" placeholder="输入坐标点，如有多个坐标请换行。示例：10, 20"></textarea>
+            </div>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" class="nes-checkbox" checked id="clearCheckbox" />
+              <span>Clear grid before draw</span>
+            </label>
+          </div>
+	  <hr/>
+          <div style="margin-top: 20px; text-align:left">
+            <input type="file" id="imageInput" accept="image/*"><br/><br/>
+            <button id="send" class="nes-btn is-success">Send image</button>
+            <button id="save" class="nes-btn is-success">Save image</button>
+            <button id="syncTime" class="nes-btn is-success">Sync time</button>
+            <button id="rotateMatrixButton" class="nes-btn is-success">Rotate</button>
+            <button id="clearMatrixButton" class="nes-btn is-success">Clear</button>
+          </div>
+          <div style="margin-top: 10px">
+            <div class="nes-field is-inline">
+              <label for="inline_field">brightness</label>
+              <input type="text" id="brightnesseField" class="nes-input is-success" placeholder="100">
+              <button id="updateBrightness" class="nes-btn is-success">Update</button>
+            </div>
+            <div class="nes-field is-inline">
+              <label for="inline_field">night range</label>
+              <input type="text" id="nightRangeTimeField" class="nes-input is-success" placeholder="22:00-08:00">
+              <button id="updateNightRangeTime" class="nes-btn is-success">Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+      <p>&copy; 创客阿玮 2024 - <a href="https://b23.tv/uysJOjk" target="_blank">https://b23.tv/uysJOjk</a>. All rights reserved.</p>
+  </footer>
+  <script>
+    const colorPicker = document.getElementById("colorPicker");
+    const imageInput = document.getElementById("imageInput");
+    const xOffsetInput = document.getElementById("xOffsetInput");
+    const yOffsetInput = document.getElementById("yOffsetInput");
+    const scaleInput = document.getElementById("scaleInput");
+    const posInput = document.getElementById("posInput");
+    const commitButton = document.getElementById("commitButton");
+    const rotateButton = document.getElementById("rotateButton");
+    const clearGridButton = document.getElementById("clearGridButton");
+    const clearMatrixButton = document.getElementById("clearMatrixButton");
+    const clearCheckbox = document.getElementById("clearCheckbox");
+    const swapBleGreenCheckbox = document.getElementById("swapBleGreenCheckbox");
+    const backgroundColorCheckbox = document.getElementById("backgroundColorCheckbox");
+    const canvas = document.querySelector(".canvas");
+    const clearColor = "";
+    const width = 64;
+    const height = 64;
+    
+    let comPort = null;
+    let markColor = "#239b56";
+    let offsetX = 0, offsetY = 0;
+    let newWidth, newHeight, imageBuffer;
+    let cells = new Array(width);
+    let globalPosList = [];
+    let isMouseDown = false;
+    
+    function wifiSettingsInit() {
+      let modal = document.getElementById("myModal");
+      let btn = document.getElementById("wifiSettingsButton");
+      let span = document.getElementsByClassName("close")[0];
+      let cancelBtn = document.getElementById("cancelBtn");
+      btn.onclick = function() {
+        modal.style.display = "block";
+        let connectedSSID = getConnectedSSID();
+        if (connectedSSID) {
+          document.getElementById("ssid").value = connectedSSID;
+        }
+      }
+
+      span.onclick = function() {
+        modal.style.display = "none";
+      }
+
+      cancelBtn.onclick = function() {
+        modal.style.display = "none";
+      }
+
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+
+      // Placeholder function to simulate getting the connected WiFi SSID
+      function getConnectedSSID() {
+        return "";
+      }
+
+      // Handle form submission
+      document.getElementById("wifiForm").onsubmit = function(event) {
+        event.preventDefault();
+        let ssid = document.getElementById("ssid").value.trim();
+        let password = document.getElementById("password").value.trim();
+        console.log("SSID:", ssid);
+        console.log("Password:", password);
+        if(ssid.length < 1) {
+          alert("ssid should not be empty");
+          return;
+        }
+        modal.style.display = "none";
+        serialSend(getUpdateWifiBuffer(ssid, password));
+      }
+    }
+    
+    
+    function getUpdateImageBuffer() {
+      let bodySize = imageBuffer.length + 4 + 1;
+      let buffer = new Uint8Array(6 + bodySize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = bodySize & 0xFF;
+      buffer[4] = (bodySize >> 8) & 0xFF;
+      buffer[5] = 0x00;
+      buffer[6] = newWidth & 0xFF;
+      buffer[7] = newHeight & 0xFF;
+      buffer[8] = offsetX & 0xFF;
+      buffer[9] = offsetY & 0xFF;
+      for(let i = 0; i < imageBuffer.length; i++) {
+        buffer[10 + i] = imageBuffer[i];
+      }
+      return buffer;
+    }
+    
+    function getDrawPixelBuffer() {
+      let pixels = [];
+      for(let x = 0; x < width; x++) {
+        for(let y = 0; y < height; y++) {
+          let rgbString = cells[x][y].style.backgroundColor;
+          if(rgbString) {
+            const result = rgbString.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            const r = parseInt(result[1], 10);
+            const g = parseInt(result[2], 10);
+            const b = parseInt(result[3], 10);
+            const color565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+            pixels.push({"x": x, "y": y, "color565": color565});
+          }
+        }
+      }
+      
+      if(pixels.length < 1) {
+        return;
+      }
+      
+      const totalSize = 9 + pixels.length * 4;
+      console.log("totalSize=", totalSize, "pixels buff size=", pixels.length);
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      let bodySize = pixels.length * 4 + 3;
+      console.log("bodySize=", bodySize);
+      buffer[3] = bodySize & 0xFF;
+      buffer[4] = (bodySize >> 8) & 0xFF;
+      buffer[5] = 0x01;  // cmd
+      buffer[6] = pixels.length & 0xFF;
+      buffer[7] = (pixels.length >> 8) & 0xFF;
+      let j = 0;
+      for(let i = 0; i < pixels.length; i++) {
+        buffer[ 8 + j] = pixels[i].y;
+        buffer[ 9 + j] = pixels[i].x;
+        buffer[10 + j] = pixels[i].color565 & 0xFF;
+        buffer[11 + j] = (pixels[i].color565 >> 8) & 0xFF;
+        j += 4;
+      }
+      
+      return buffer;
+    }
+    
+    function getCmdBuffer(cmd) {
+      const totalSize = 7;
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = 0x01;
+      buffer[4] = 0x00;
+      buffer[5] = cmd;
+      buffer[6] = 0x00;
+      
+      return buffer;
+    }
+    
+    function getClearBuffer() {
+      return getCmdBuffer(0x02);
+    }
+    
+    function getRotateBuffer() {
+      return getCmdBuffer(0x03);
+    }
+    
+    function getSaveImageBuffer() {
+      return getCmdBuffer(0x04);
+    }
+    
+    function getSyncTimeBuffer() {
+      const totalSize = 11;
+      const timestamp = Date.now();
+      const seconds = Math.floor(timestamp / 1000);
+      console.log("seconds=", seconds);
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = 0x05;
+      buffer[4] = 0x00;
+      buffer[5] = 0x06; // sync time cmd
+      buffer[6] = (seconds >> 24) & 0xFF;
+      buffer[7] = (seconds >> 16) & 0xFF;
+      buffer[8] = (seconds >>  8) & 0xFF;
+      buffer[9] = (seconds >>  0) & 0xFF;
+      console.log(buffer[6]);
+      console.log(buffer[7]);
+      console.log(buffer[8]);
+      console.log(buffer[9]);
+      buffer[10] = 0x00;
+      
+      return buffer;
+    }
+    
+    function getUpdateBrightnessBuffer() {
+      let brightness = document.getElementById("brightnesseField").value;
+      if(!/^(25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])$/.test(brightness)) {
+        alert("Invalid brightness, should between 0~255");
+        return;
+      }
+      brightness = parseInt(brightness);
+      console.log("brightness=" + brightness);
+      
+      const totalSize = 8;
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = 0x02;
+      buffer[4] = 0x00;
+      buffer[5] = 0x07; // update brightness cmd
+      buffer[6] = brightness & 0xff;
+      buffer[7] = 0x00;
+      
+      return buffer;
+    }
+    
+    function getUpdateNightRangeTimeBuffer() {
+      let rangeTime = document.getElementById("nightRangeTimeField").value;
+      const regex = /^([01]?\d|2[0-3]):([0-5]?\d)-([01]?\d|2[0-3]):([0-5]?\d)$/;
+      if(!regex.test(rangeTime)) {
+        alert("Invalid range time!");
+        return;
+      }
+      const bodySize = 1 + rangeTime.length + 1; // cmd + string + \0
+      const totalSize = 6 + bodySize;
+      let buffer = new Uint8Array(totalSize);
+      let encoder = new TextEncoder();
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = bodySize & 0xFF;
+      buffer[4] = (bodySize >> 8) & 0xFF;
+      buffer[5] = 0x0B; // cmd
+      buffer.set(encoder.encode(rangeTime), 6);
+      buffer[6 + rangeTime.length] = 0x00;
+      buffer[totalSize - 2] = 0x00;
+      buffer[totalSize - 1] = 0x00;
+      return buffer;
+    }
+    
+    function getSetFontColorBuffer() {
+      const hexColor = colorPicker.value.replace('#', '');    
+      const r = parseInt(hexColor.substring(0, 2), 16) & 0x1F;
+      const g = parseInt(hexColor.substring(2, 4), 16) & 0x3F;
+      const b = parseInt(hexColor.substring(4, 6), 16) & 0x1F;
+      const color565 = (r << 11) | (g << 5) | b;
+      const totalSize = 10;
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = 0x04;
+      buffer[4] = 0x00;
+      buffer[5] = 0x08; // set font color cmd
+      buffer[6] = backgroundColorCheckbox.checked ? 0x01 : 0x00; // background 0x01设置背景色 0x00设置前景色
+      buffer[7] = (color565 >> 8) & 0xFF;
+      buffer[8] = color565 & 0xFF;
+      buffer[9] = 0x00;
+      console.log(color565);
+      
+      return buffer
+    }
+    
+    function getSwapBlueGreenBuffer() {
+      const totalSize = 8;
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = 0x02;
+      buffer[4] = 0x00;
+      buffer[5] = 0x09; // swap blue green cmd
+      buffer[6] = swapBleGreenCheckbox.checked ? 0x01 : 0x00;
+      buffer[7] = 0x00;
+      
+      return buffer;
+    }
+    
+    function getUpdateWifiBuffer(ssid, password) {
+      const bodySize = 1 + ssid.length + 1 + password.length + 1;
+      const totalSize = 6 + bodySize;
+      let encoder = new TextEncoder();
+      let buffer = new Uint8Array(totalSize);
+      buffer[0] = 0xCC;
+      buffer[1] = 0x00;
+      buffer[2] = 0x00;
+      buffer[3] = bodySize & 0xFF;
+      buffer[4] = (bodySize >> 8) & 0xFF;
+      buffer[5] = 0x0a; // update wifi settings
+      buffer.set(encoder.encode(ssid), 6);
+      buffer[6 + ssid.length] = 0x00;
+      buffer.set(encoder.encode(password), 6 + 1 + ssid.length);
+      buffer[totalSize - 2] = 0x00;
+      buffer[totalSize - 1] = 0x00;
+      
+      console.log(buffer);
+      
+      return buffer;
+    }
+    
+    async function serialSend(buffer) {
+      if(!comPort) {
+        return;
+      }
+      if(!buffer) {
+        return;
+      }
+      const writer = comPort.writable.getWriter();
+      try {
+        await writer.write(buffer);
+      } catch (err) {
+        console.error("Error writing to port:", err);
+      } finally {
+        writer.releaseLock();
+      }
+    }
+    
+    function init() {
+      wifiSettingsInit();
+      
+      colorPicker.addEventListener("input", () => {
+        markColor = colorPicker.value;
+        document.getElementById("selectedColor").textContent = colorPicker.value;
+      });
+      
+      document.getElementById("connect").addEventListener("click", async () => {
+        try {
+          comPort = await navigator.serial.requestPort();
+          await comPort.open({ baudRate: 115200 });
+          console.log("Port opened successfully");
+          const textDecoder = new TextDecoderStream();
+          const readableStreamClosed = comPort.readable.pipeTo(textDecoder.writable);
+          const reader = textDecoder.readable.getReader();
+          
+          let buffer = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+              reader.releaseLock();
+              break;
+            }
+            buffer += value;
+            let lines = buffer.split('\n');
+            buffer = lines.pop(); // 保留最后一个不完整的行
+
+            for (let line of lines) {
+              console.log(line);
+            }
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      });
+      
+      document.getElementById("send").addEventListener("click", async () => {
+        let buffer = null;
+        if(imageBuffer) {
+          buffer = getUpdateImageBuffer();
+        } else {
+          buffer = getDrawPixelBuffer();
+        }
+        serialSend(buffer);
+      });
+      
+      document.getElementById("save").addEventListener("click", () => {
+        serialSend(getSaveImageBuffer());
+      });
+      document.getElementById("syncTime").addEventListener("click", () => {
+        serialSend(getSyncTimeBuffer());
+      });
+      document.getElementById("setFontColorButton").addEventListener("click", () => {
+        serialSend(getSetFontColorBuffer());
+      });
+      document.getElementById("swapBlueGreenButton").addEventListener("click", () => {
+        serialSend(getSwapBlueGreenBuffer());
+      });
+      document.getElementById("updateBrightness").addEventListener("click", () => {
+        serialSend(getUpdateBrightnessBuffer());
+      });
+      document.getElementById("updateNightRangeTime").addEventListener("click", () => {
+        serialSend(getUpdateNightRangeTimeBuffer());
+      });
+      
+      
+      rotateButton.addEventListener("click", () => {
+          rotate();
+          draw(globalPosList);
+        }
+      );
+      
+      rotateMatrixButton.addEventListener("click", () => {
+        serialSend(getRotateBuffer());
+      });
+      
+      clearGridButton.addEventListener("click", () => {clearGrid()});
+      clearMatrixButton.addEventListener("click", () => {clearMatrix()});
+      
+      commitButton.addEventListener("click", () => {
+        globalPosList = parsePosList()
+        draw(globalPosList);
+      });
+      imageInput.addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          clearGrid();
+          offsetX = 0;
+          offsetY = 0;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+              const canvas = document.createElement("canvas");
+              if (img.width > img.height) {
+                newWidth = width;
+                newHeight = Math.round((img.height / img.width) * width);
+                offsetY = ~~((height - newHeight) / 2);
+              } else {
+                newHeight = height;
+                newWidth = Math.round((img.width / img.height) * height);
+                offsetX = ~~((width - newWidth) / 2);
+              }
+              canvas.width = newWidth;
+              canvas.height = newHeight;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, newWidth, newHeight);
+              const imageData = ctx.getImageData(0, 0, newWidth, newHeight);
+              const pixels = imageData.data;
+              imageBuffer = new Uint8Array(newWidth * newHeight * 2);
+              console.log("imageBuffer size=", imageBuffer.length);
+              let j = 0;
+              for (let i = 0; i < newWidth * newHeight; i++) {
+                const r = pixels[i * 4];
+                const g = pixels[i * 4 + 1];
+                const b = pixels[i * 4 + 2];
+                
+                const color565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+                imageBuffer[j] = color565 & 0xFF;
+                imageBuffer[j + 1] = (color565 >> 8) & 0xFF;
+                j += 2;
+                const r5 = (color565 >> 11) & 0x1F;
+                const g6 = (color565 >> 5) & 0x3F;
+                const b5 = color565 & 0x1F;
+                const r8 = (r5 * 255) / 31;
+                const g8 = (g6 * 255) / 63;
+                const b8 = (b5 * 255) / 31;
+                const hexColor = `rgb(${Math.round(r8)}, ${Math.round(g8)}, ${Math.round(b8)})`;
+                
+                const x = ~~(i / newWidth) + offsetY;
+                const y = i % newWidth + offsetX;
+                cells[x][y].style.backgroundColor = hexColor;
+              }
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+      for (let i = 0; i < width; i++) {
+        cells[i] = new Array(height);
+        for(let j = 0; j < height; j++) {
+          const cell = document.createElement("div");
+          cell.classList.add("grid-cell");
+          canvas.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+          });
+          cell.addEventListener("mousedown", (e) => {
+            isMouseDown = true;
+            cell.style.backgroundColor = cell.style.backgroundColor ? clearColor : markColor;
+          });
+          cell.addEventListener("mousemove", (e) => {
+            if(isMouseDown) {
+              cell.style.backgroundColor = markColor;
+            }
+          });
+          cell.addEventListener("mouseup", (e)=>{
+            isMouseDown = false;
+          });
+
+          canvas.appendChild(cell);
+          cells[i][j] = cell;
+        }
+      }
+    }
+    
+    function expand(posList, n) {
+      if(n < 1) {
+        return posList;
+      }
+      const expandedPosList = [];
+      for (const [x, y] of posList) {
+        for (let dx = 0; dx < n; dx++) {
+          for (let dy = 0; dy < n; dy++) {
+            expandedPosList.push([n * x + dx, n * y + dy]);
+          }
+        }
+      }
+      let text = "";
+      expandedPosList.forEach((pos) => {text += pos[1] + ",\t" + pos[0] + "\n"});
+      console.log("Expanded positions")
+      console.log(text);
+      return expandedPosList;
+    }
+    
+    function clearMatrix() {
+      serialSend(getClearBuffer());
+    }
+    
+    function clearGrid() {
+      imageBuffer = null;
+      for(let i = 0; i < width; i++) {
+        for(let j = 0; j < height; j++) {
+          cells[i][j].style.backgroundColor = clearColor;
+        }
+      }
+    }
+    
+    function rotate() {
+      console.log("rotate");
+      for(let i = 0; i < globalPosList.length; i++) {
+        const x = globalPosList[i][0];
+        const y = globalPosList[i][1];
+        globalPosList[i][0] = y;
+        globalPosList[i][1] = -x;
+      }
+    }
+    
+    function draw(posList) {
+      if(clearCheckbox.checked) {
+        clearGrid();
+      }
+      posList = expand(posList, parseScale())
+      posList.forEach(pos => {
+        const x = pos[0] + parseInt(xOffsetInput.value);
+        const y = pos[1] + parseInt(yOffsetInput.value);
+        if(x >= 0 && x < width && y >= 0 && y < height) {
+          cells[x][y].style.backgroundColor = markColor;
+        }
+      })
+      
+    } 
+    
+    function parseScale() {
+      const scale = parseInt(scaleInput.value);
+      if(scale < 0 || scale > 9) {
+        alert("Invalid scale, must in [1, 9]");
+        return -1;
+      }
+      return scale;
+    }
+    
+    function parsePosList() {
+      const indices = posInput.value.split("\n").map(pos => pos.trim());
+      let posList = [];
+      indices.forEach(pos => {
+        const tmp = pos.split(",");
+        if(tmp.length === 2) {
+          posList.push([parseInt(tmp[1]), parseInt(tmp[0])]);
+        }
+      });
+      return posList;
+    }
+    
+    init();
+
+  </script>
+</body>
+</html>

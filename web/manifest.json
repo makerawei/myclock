@@ -1,0 +1,12 @@
+{
+  "name": "MyClock for ESP32",
+  "version": "1.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/myclock-merged-esp32.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
